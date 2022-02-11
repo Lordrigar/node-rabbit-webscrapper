@@ -1,0 +1,19 @@
+{
+  "name": "rabbit-webscrapper",
+  "version": "1.0.0",
+  "description": "Simple webscrapper with queue",
+  "main": "app/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon app/index.js"
+  },
+  "author": "Me",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.8.0",
+    "axios": "^0.25.0",
+    "cheerio": "^1.0.0-rc.10",
+    "express": "^4.17.2",
+    "nodemon": "^2.0.15"
+  }
+}
