@@ -1,11 +1,10 @@
 import amqp from 'amqplib';
 import axios from 'axios';
 import fs from 'fs';
-import { parentPort } from 'worker_threads';
 
 const QUEUE_NAME = 'jobs';
 
-const downloadFile = async url => {
+const downloadFile = async (url, folder) => {
   const path = './app/downloads';
   const lastIndex = url.lastIndexOf('/');
   const fileName = url.substr(lastIndex + 1);
@@ -16,7 +15,7 @@ const downloadFile = async url => {
     responseType: 'stream',
   });
 
-  image.data.pipe(fs.createWriteStream(`${path}/${fileName}`));
+  image.data.pipe(fs.createWriteStream(`${path}/${folder}/${fileName}`));
 
   return new Promise((resolve, reject) => {
     image.data.on('end', () => {
@@ -49,13 +48,9 @@ const dequeue = async () => {
   const channel = await connect();
 
   channel.consume(QUEUE_NAME, async msg => {
-    const url = msg.content.toString();
+    const { url, folder } = JSON.parse(msg.content.toString());
 
-    console.log({ url });
-
-    const downloadedFilePath = await downloadFile(url);
-
-    parentPort.postMessage(downloadedFilePath);
+    await downloadFile(url, folder);
 
     channel.ack(msg);
   });

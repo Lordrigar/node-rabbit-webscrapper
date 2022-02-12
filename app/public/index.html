@@ -15,24 +15,35 @@
     </form>
 
     <button class="download-files">Download scraped files</button>
+    <input class="zip-checkbox" type="checkbox" /> Zipped?
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.25.0/axios.min.js"></script>
     <script>
       const submitButton = document.querySelector('.submit-form');
       const url = document.querySelector('.url-text');
       const downloadButton = document.querySelector('.download-files');
+      const zip = document.querySelector('.zip-checkbox');
+
       submitButton.addEventListener('click', e => {
         e.preventDefault();
 
-        axios.post('/scrape', {
-          payload: url.value,
-        });
+        axios
+          .post('/scrape', {
+            payload: url.value,
+          })
+          .then(response => {
+            const hash = response.data;
+
+            downloadButton.setAttribute('data-folder', hash);
+          });
       });
 
       downloadButton.addEventListener('click', e => {
         e.preventDefault();
+        const folderHash = downloadButton.dataset.folder;
+        const toZip = zip.checked;
 
-        window.open('/download');
+        window.open(`/download?folder=${folderHash}&zip=${toZip}`);
       });
     </script>
   </body>

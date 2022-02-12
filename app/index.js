@@ -1,3 +1,4 @@
+import archiver from 'archiver';
 import bodyParser from 'body-parser';
 import express from 'express';
 import fs from 'fs';
@@ -37,31 +38,54 @@ app.get('/', async (req, res, next) => {
 
 app.post('/scrape', async (req, res, next) => {
   const url = req.body.payload;
+  const hash = (Math.random() + 1).toString(36).substring(7);
 
-  const files = await fs.promises.readdir('./app/downloads');
-
-  files.forEach(file => {
-    fs.unlink(`./app/downloads/${file}`, () => {
-      console.log(`${file} removed`);
-    });
-  });
-
+  await fs.promises.mkdir(`./app/downloads/${hash}`);
   // DO the scraping here
 
-  await enqueue(url);
+  await enqueue(JSON.stringify({ url, folder: hash }));
 
+  res.send(hash);
   // TODO:
   // 1. Scrape given url from images
   // 2. Enqueue url to the image
-  // 4. Add zipped option, that will zip all images together
   // 6. Cleanup code
 });
 
 app.get('/download', async (req, res, next) => {
-  // This isn't even checking if there is something downloaded...#yolo
-  const files = await fs.promises.readdir('./app/downloads');
+  const folderHash = req.query.folder;
+  const isZip = req.query.zip === 'true';
+  const downloadPath = `./app/downloads/${folderHash}`;
+  const files = await fs.promises.readdir(downloadPath);
 
-  files.forEach(file => res.download(`./app/downloads/${file}`, file));
+  if (files.length === 0) {
+    throw new Error('Nothing to download');
+  }
+
+  if (isZip) {
+    let output = fs.createWriteStream(`${folderHash}/images.zip`);
+    const archive = archiver('zip', {
+      zlib: { level: 9 },
+    });
+    archive.pipe(output);
+
+    files.forEach(file => {
+      const readStream = fs.createReadStream(`${downloadPath}/${file}`);
+      archive.append(readStream, { name: file });
+    });
+
+    archive.finalize();
+    archive.pipe(res);
+  } else {
+    files.forEach(file => {
+      res.download(`${downloadPath}/${file}`, file);
+    });
+  }
+
+  setTimeout(
+    () => fs.rmSync(downloadPath, { recursive: true, force: true }),
+    0
+  );
 });
 
 registerWorker();
