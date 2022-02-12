@@ -1,7 +1,10 @@
 import archiver from 'archiver';
+import axios from 'axios';
 import bodyParser from 'body-parser';
+import cheerio from 'cheerio';
 import express from 'express';
 import fs from 'fs';
+import url from 'url';
 import { Worker } from 'worker_threads';
 import { enqueue } from './subscriber.js';
 
@@ -37,19 +40,25 @@ app.get('/', async (req, res, next) => {
 });
 
 app.post('/scrape', async (req, res, next) => {
-  const url = req.body.payload;
+  const requestedUrl = req.body.payload;
   const hash = (Math.random() + 1).toString(36).substring(7);
+  const webPageContent = await axios.get(requestedUrl);
+  const $ = cheerio.load(webPageContent.data);
+  const urls = [];
 
   await fs.promises.mkdir(`./app/downloads/${hash}`);
-  // DO the scraping here
+  // // DO the scraping here
 
-  await enqueue(JSON.stringify({ url, folder: hash }));
+  await Promise.all(
+    $('img')
+      .toArray()
+      .map(async img => {
+        const imageUrl = new URL(img.attribs.src);
+        await enqueue(JSON.stringify({ url: imageUrl, folder: hash }));
+      })
+  );
 
   res.send(hash);
-  // TODO:
-  // 1. Scrape given url from images
-  // 2. Enqueue url to the image
-  // 6. Cleanup code
 });
 
 app.get('/download', async (req, res, next) => {
@@ -62,7 +71,7 @@ app.get('/download', async (req, res, next) => {
     throw new Error('Nothing to download');
   }
 
-  if (isZip) {
+  if (isZip || files.length > 1) {
     let output = fs.createWriteStream(`${folderHash}/images.zip`);
     const archive = archiver('zip', {
       zlib: { level: 9 },
@@ -77,14 +86,13 @@ app.get('/download', async (req, res, next) => {
     archive.finalize();
     archive.pipe(res);
   } else {
-    files.forEach(file => {
-      res.download(`${downloadPath}/${file}`, file);
-    });
+    const file = files[0];
+    res.download(`${downloadPath}/${file}`, file);
   }
 
   setTimeout(
     () => fs.rmSync(downloadPath, { recursive: true, force: true }),
-    0
+    1000
   );
 });
 
