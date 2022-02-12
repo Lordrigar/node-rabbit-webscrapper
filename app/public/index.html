@@ -5,17 +5,99 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Webscrapper</title>
-    <style></style>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .container {
+        width: 100%;
+        max-width: 1120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 0 auto;
+      }
+
+      .section {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 400px;
+        background-color: beige;
+        padding: 0 30px 20px 30px;
+        box-shadow: 4.5px 4.8px 3.6px rgba(0, 0, 0, 0.052),
+          12.5px 13.1px 10px rgba(0, 0, 0, 0.075),
+          30.1px 31.7px 24.1px rgba(0, 0, 0, 0.098),
+          100px 105px 80px rgba(0, 0, 0, 0.15);
+      }
+
+      .section h2 {
+        padding-top: 30px;
+      }
+
+      .section form {
+        width: 100%;
+      }
+
+      .url-text {
+        display: block;
+        margin: 20px auto;
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 1.2rem;
+      }
+
+      .submit-form,
+      .download-files {
+        margin: 20px auto;
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: cornflowerblue;
+      }
+
+      .zip-section {
+        display: flex;
+        flex-direction: row;
+        width: 400px;
+        background-color: beige;
+        justify-content: space-evenly;
+        align-items: center;
+      }
+
+      .zip-checkbox {
+        background-color: #e9ecee;
+        border: 1px solid #adb8c0;
+        color: #99a1a7;
+        box-shadow: 4.5px 4.8px 3.6px rgba(0, 0, 0, 0.052),
+          12.5px 13.1px 10px rgba(0, 0, 0, 0.075),
+          30.1px 31.7px 24.1px rgba(0, 0, 0, 0.098),
+          100px 105px 80px rgba(0, 0, 0, 0.15);
+      }
+    </style>
   </head>
   <body>
-    What's up?
-    <form>
-      <input class="url-text" type="text" placeholder="url" />
-      <input class="submit-form" type="submit" value="Submit" />
-    </form>
-
-    <button class="download-files">Download scraped files</button>
-    <input class="zip-checkbox" type="checkbox" /> Zipped?
+    <div class="container">
+      <div class="section">
+        <h2>Webscrapper</h2>
+        <form>
+          <input class="url-text" type="text" placeholder="url" />
+          <input class="submit-form" type="submit" value="Submit" />
+        </form>
+      </div>
+      <div class="zip-section">
+        <input class="zip-checkbox" id="zip-checkbox" type="checkbox" />
+        <label for="zip-checkbox">Zip download?</label>
+      </div>
+      <div class="section">
+        <button class="download-files">Download scraped files</button>
+      </div>
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.25.0/axios.min.js"></script>
     <script>

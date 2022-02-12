@@ -4,9 +4,8 @@ import bodyParser from 'body-parser';
 import cheerio from 'cheerio';
 import express from 'express';
 import fs from 'fs';
-import url from 'url';
-import { Worker } from 'worker_threads';
 import { enqueue } from './subscriber.js';
+import { registerWorker, generateHash } from './utils.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,35 +18,17 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded());
 
-const registerWorker = () => {
-  const worker = new Worker('./app/consumer.js');
-
-  worker.on('message', msg => {
-    console.log('Message from worker: ' + msg);
-  });
-
-  worker.on('error', err => {
-    console.log(`Worker error ${err}`);
-  });
-
-  worker.on('exit', code => {
-    console.log(`Worker exited with code ${code}`);
-  });
-};
-
 app.get('/', async (req, res, next) => {
   fs.createReadStream('./app/public/index.html').pipe(res);
 });
 
 app.post('/scrape', async (req, res, next) => {
   const requestedUrl = req.body.payload;
-  const hash = (Math.random() + 1).toString(36).substring(7);
+  const hash = generateHash();
   const webPageContent = await axios.get(requestedUrl);
   const $ = cheerio.load(webPageContent.data);
-  const urls = [];
 
   await fs.promises.mkdir(`./app/downloads/${hash}`);
-  // // DO the scraping here
 
   await Promise.all(
     $('img')
@@ -72,7 +53,7 @@ app.get('/download', async (req, res, next) => {
   }
 
   if (isZip || files.length > 1) {
-    let output = fs.createWriteStream(`${folderHash}/images.zip`);
+    const output = fs.createWriteStream(`${folderHash}/images.zip`);
     const archive = archiver('zip', {
       zlib: { level: 9 },
     });

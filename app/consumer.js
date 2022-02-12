@@ -1,8 +1,6 @@
-import amqp from 'amqplib';
 import axios from 'axios';
 import fs from 'fs';
-
-const QUEUE_NAME = 'jobs';
+import { rabbitConnect, QUEUE_NAME } from './utils.js';
 
 const downloadFile = async (url, folder) => {
   const path = './app/downloads';
@@ -28,24 +26,8 @@ const downloadFile = async (url, folder) => {
   });
 };
 
-const connect = async () => {
-  let channel;
-  try {
-    const connection = await amqp.connect('amqp://rabbitmq');
-
-    channel = await connection.createChannel();
-    channel.assertQueue(QUEUE_NAME, {
-      durable: false,
-    });
-  } catch (error) {
-    throw error;
-  }
-
-  return channel;
-};
-
 const dequeue = async () => {
-  const channel = await connect();
+  const channel = await rabbitConnect();
 
   channel.consume(QUEUE_NAME, async msg => {
     const { url, folder } = JSON.parse(msg.content.toString());
@@ -56,4 +38,4 @@ const dequeue = async () => {
   });
 };
 
-setInterval(dequeue, 2000);
+setInterval(dequeue, 5000);

@@ -1,25 +1,7 @@
-import amqp from 'amqplib';
-
-const QUEUE_NAME = 'jobs';
-
-const connect = async () => {
-  let channel;
-  try {
-    const connection = await amqp.connect('amqp://rabbitmq');
-
-    channel = await connection.createChannel();
-    channel.assertQueue(QUEUE_NAME, {
-      durable: false,
-    });
-  } catch (error) {
-    throw error;
-  }
-
-  return channel;
-};
+import { rabbitConnect, QUEUE_NAME } from './utils.js';
 
 const enqueue = async job => {
-  const channel = await connect();
+  const channel = await rabbitConnect();
 
   channel.sendToQueue(QUEUE_NAME, Buffer.from(job));
 };
